@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { useAuth } from '../auth/AuthContext';
 
 export default function Login() {
@@ -17,10 +18,25 @@ export default function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(identifier, password);
+      const loggedInUser = await login(identifier, password);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login Successful!',
+        text: `Welcome back, ${loggedInUser?.full_name || 'User'}!`,
+        timer: 1500,
+        showConfirmButton: false,
+        timerProgressBar: true,
+      });
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid username or password.');
+      const msg = err.response?.data?.message || 'Invalid username or password.';
+      setError(msg);
+      Swal.fire({
+        icon: 'error',
+        title: 'Login Failed',
+        text: msg,
+        confirmButtonColor: '#2563eb',
+      });
     } finally {
       setLoading(false);
     }

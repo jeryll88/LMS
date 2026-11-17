@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { useAuth } from '../auth/AuthContext';
 import api from '../api/client';
 
@@ -45,9 +46,24 @@ export default function Register() {
     setLoading(true);
     try {
       await register(formData);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Registration Successful!',
+        text: 'Your student account has been created. Redirecting to your portal...',
+        timer: 1800,
+        showConfirmButton: false,
+        timerProgressBar: true,
+      });
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed.');
+      const msg = err.response?.data?.message || 'Registration failed.';
+      setError(msg);
+      Swal.fire({
+        icon: 'error',
+        title: 'Registration Failed',
+        text: msg,
+        confirmButtonColor: '#2563eb',
+      });
     } finally {
       setLoading(false);
     }

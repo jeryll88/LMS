@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import { useAuth } from '../auth/AuthContext';
 
 export default function Layout({ children, onSearch }) {
@@ -13,6 +14,32 @@ export default function Layout({ children, onSearch }) {
 
   const [globalSearch, setGlobalSearch] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: 'Sign Out?',
+      text: 'Are you sure you want to end your current session?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#e11d48',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, Sign Out',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true,
+    });
+
+    if (result.isConfirmed) {
+      await Swal.fire({
+        icon: 'success',
+        title: 'Logged Out',
+        text: 'You have been safely signed out. See you soon!',
+        timer: 1300,
+        showConfirmButton: false,
+        timerProgressBar: true,
+      });
+      logout();
+    }
+  };
 
   const handleGlobalSearchSubmit = (e) => {
     e.preventDefault();
@@ -247,7 +274,7 @@ export default function Layout({ children, onSearch }) {
             </div>
             <p className="text-xs font-semibold text-white truncate">{user?.full_name}</p>
           </div>
-          <button onClick={logout} className="text-xs text-rose-400 font-medium px-2 py-1">
+          <button onClick={handleLogout} className="text-xs text-rose-400 font-medium px-2 py-1">
             Logout
           </button>
         </div>
@@ -284,7 +311,7 @@ export default function Layout({ children, onSearch }) {
             </div>
           </div>
           <button
-            onClick={logout}
+            onClick={handleLogout}
             title="Sign out"
             className="text-slate-400 hover:text-rose-400 p-1.5 transition text-xs"
           >
@@ -334,7 +361,7 @@ export default function Layout({ children, onSearch }) {
             </div>
 
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="text-xs text-rose-500 hover:text-rose-700 font-semibold border border-rose-200 px-2 sm:px-3 py-1 rounded-lg hover:bg-rose-50 transition"
             >
               Logout
