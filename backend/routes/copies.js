@@ -7,7 +7,7 @@ const router = express.Router();
 
 // GET /api/copies - List physical book copies
 router.get('/', auth, requireAnyRole(['Admin', 'Librarian']), async (req, res) => {
-  const { book_id, status, search } = req.query;
+  const { book_id, status, search, sort } = req.query;
   try {
     let sql = `
       SELECT bc.copy_id, bc.book_id, bc.barcode, bc.status,
@@ -30,13 +30,21 @@ router.get('/', auth, requireAnyRole(['Admin', 'Librarian']), async (req, res) =
 
     if (search) {
       params.push(`%${search}%`);
-      sql += ` AND (bc.barcode ILIKE $${params.length} OR b.title ILIKE $${params.length} OR b.isbn ILIKE $${params.length})`;
+      sql += ` AND (bc.barcode ILIKE $${params.length} OR b.title ILIKE $${params.length} OR b.isbn ILIKE $${params.length} OR b.author ILIKE $${params.length})`;
     }
 
-    sql += ' ORDER BY bc.copy_id DESC';
+    if (sort === 'desc') {
+      sql += ' ORDER BY bc.copy_id DESC';
+    } else {
+      sql += ' ORDER BY bc.copy_id ASC';
+    }
 
     const result = await db.query(sql, params);
-    const copies = result.rows.map(r => ({ ...r, id: r.copy_id }));
+    const copies = result.rows.map(r => ({
+      ...r,
+      id: r.copy_id,
+      copy_code: 'C' + String(r.copy_id).padStart(3, '0')
+    }));
     res.json({ copies });
   } catch (err) {
     console.error('Fetch copies error:', err);
@@ -65,38 +73,70 @@ router.get('/:id', auth, requireAnyRole(['Admin', 'Librarian']), async (req, res
   }
 });
 
-// POST /api/copies - Add new physical copy
+// POST /api/copies - Add new physical copy (supports single or batch copies)
 router.post('/', auth, requireAnyRole(['Admin', 'Librarian']), async (req, res) => {
-  const { book_id, barcode, status } = req.body;
+  const { book_id, barcode, status, quantity } = req.body;
   if (!book_id) return res.status(400).json({ message: 'Book ID is required' });
 
   try {
-    const bookCheck = await db.query('SELECT book_id FROM books WHERE book_id = $1', [book_id]);
+    const bookCheck = await db.query('SELECT book_id, title FROM books WHERE book_id = $1', [book_id]);
     if (bookCheck.rowCount === 0) return res.status(404).json({ message: 'Referenced book not found' });
 
-    let finalBarcode = barcode;
-    if (!finalBarcode) {
-      // Auto-generate barcode
-      const countRes = await db.query('SELECT COUNT(*) FROM book_copies WHERE book_id = $1', [book_id]);
-      const nextNum = parseInt(countRes.rows[0].count) + 1;
-      finalBarcode = `BC-${book_id.toString().padStart(4, '0')}-${nextNum.toString().padStart(2, '0')}`;
+    const qty = Math.min(Math.max(parseInt(quantity) || 1, 1), 50);
+
+    // If single copy and user specified a custom barcode
+    if (qty === 1 && barcode && barcode.trim()) {
+      const cleanBarcode = barcode.trim();
+      const barcodeCheck = await db.query('SELECT copy_id FROM book_copies WHERE barcode = $1', [cleanBarcode]);
+      if (barcodeCheck.rowCount > 0) {
+        return res.status(400).json({ message: 'A copy with this barcode already exists' });
+      }
+
+      const result = await db.query(
+        `INSERT INTO book_copies (book_id, barcode, status)
+         VALUES ($1, $2, $3)
+         RETURNING *`,
+        [book_id, cleanBarcode, status || 'Available']
+      );
+
+      const copy = {
+        ...result.rows[0],
+        id: result.rows[0].copy_id,
+        copy_code: 'C' + String(result.rows[0].copy_id).padStart(3, '0')
+      };
+      return res.status(201).json({ copy, message: 'Physical copy registered successfully' });
     }
 
-    // Verify barcode uniqueness
-    const barcodeCheck = await db.query('SELECT copy_id FROM book_copies WHERE barcode = $1', [finalBarcode]);
-    if (barcodeCheck.rowCount > 0) {
-      return res.status(400).json({ message: 'A copy with this barcode already exists' });
+    // Auto-generate barcodes for qty copies
+    const countRes = await db.query('SELECT COUNT(*) FROM book_copies WHERE book_id = $1', [book_id]);
+    let currentCount = parseInt(countRes.rows[0].count);
+
+    const insertedCopies = [];
+    for (let i = 0; i < qty; i++) {
+      currentCount++;
+      let finalBarcode = `BC-${book_id.toString().padStart(4, '0')}-${currentCount.toString().padStart(2, '0')}`;
+      let check = await db.query('SELECT copy_id FROM book_copies WHERE barcode = $1', [finalBarcode]);
+      if (check.rowCount > 0) {
+        finalBarcode = `BC-${book_id.toString().padStart(4, '0')}-${Date.now().toString().slice(-4)}${i}`;
+      }
+      const result = await db.query(
+        `INSERT INTO book_copies (book_id, barcode, status)
+         VALUES ($1, $2, $3)
+         RETURNING *`,
+        [book_id, finalBarcode, status || 'Available']
+      );
+      insertedCopies.push({
+        ...result.rows[0],
+        id: result.rows[0].copy_id,
+        copy_code: 'C' + String(result.rows[0].copy_id).padStart(3, '0')
+      });
     }
 
-    const result = await db.query(
-      `INSERT INTO book_copies (book_id, barcode, status)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
-      [book_id, finalBarcode, status || 'Available']
-    );
-
-    const copy = { ...result.rows[0], id: result.rows[0].copy_id };
-    res.status(201).json({ copy, message: 'Copy registered successfully' });
+    res.status(201).json({
+      copies: insertedCopies,
+      copy: insertedCopies[0],
+      message: `${qty} ${qty === 1 ? 'copy' : 'copies'} registered successfully`
+    });
   } catch (err) {
     console.error('Create copy error:', err);
     res.status(500).json({ message: 'Failed to add copy: ' + err.message });
