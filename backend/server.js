@@ -25,10 +25,27 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(helmet());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-}));
+
+// Flexible CORS allowing Vercel preview/production domains and localhost
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, postman)
+      if (!origin) return callback(null, true);
+      // Allow localhost or any vercel.app domain or FRONTEND_URL
+      if (
+        origin.includes('localhost') ||
+        origin.endsWith('.vercel.app') ||
+        (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL)
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Permissive for initial setup
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(cookieParser());
 
