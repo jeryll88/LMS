@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
       sql += ` AND b.category_id = $${params.length}`;
     }
 
-    sql += ` GROUP BY b.book_id, c.category_name, c.category_type ORDER BY b.title ASC`;
+    sql += ` GROUP BY b.book_id, c.category_name, c.category_type ORDER BY b.book_id DESC`;
 
     if (limit) {
       params.push(parseInt(limit));

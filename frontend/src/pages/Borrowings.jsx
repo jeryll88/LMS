@@ -93,152 +93,144 @@ export default function Borrowings() {
     }
   };
 
+  const statusBadge = (status) => {
+    const map = {
+      Borrowed: 'bg-amber-100 text-amber-800',
+      Returned: 'bg-slate-100 text-slate-600',
+      Overdue: 'bg-rose-100 text-rose-700',
+    };
+    return `text-xs px-2.5 py-1 rounded-full font-bold ${map[status] || 'bg-slate-100 text-slate-500'}`;
+  };
+
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="space-y-5">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
           <div>
-            <h1 className="text-xl font-bold text-slate-800">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-800">
               {isStaff ? 'Borrowing & Returning Transactions' : 'My Borrowed Books'}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              {isStaff ? 'Issue books, process returns, calculate due dates, and monitor overdues' : 'Track due dates and renew your loans'}
+              {isStaff
+                ? 'Issue books, process returns, calculate due dates, and monitor overdues'
+                : 'Track due dates and renew your loans'}
             </p>
           </div>
           {isStaff && (
             <button
               onClick={() => setShowModal(true)}
-              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-md transition flex items-center space-x-2"
+              className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-md transition flex items-center justify-center space-x-2"
             >
-              <span>➕</span>
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
               <span>Issue Book Loan</span>
             </button>
           )}
         </div>
 
+        {/* Alerts */}
         {message && (
           <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm flex justify-between items-center">
-            <span>✅ {message}</span>
-            <button onClick={() => setMessage('')} className="font-bold">✕</button>
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4 fill-emerald-600 shrink-0" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+              {message}
+            </span>
+            <button onClick={() => setMessage('')} className="font-bold ml-2 shrink-0">✕</button>
           </div>
         )}
         {error && (
           <div className="p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm flex justify-between items-center">
-            <span>⚠️ {error}</span>
-            <button onClick={() => setError('')} className="font-bold">✕</button>
+            <span>{error}</span>
+            <button onClick={() => setError('')} className="font-bold ml-2 shrink-0">✕</button>
           </div>
         )}
 
         {/* Filter Bar */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
           <form onSubmit={handleSearch} className="flex-1 flex gap-2 w-full">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by Title, Barcode, Borrower Name..."
+              placeholder="Search by book title, borrower name, barcode..."
               className="flex-1 px-4 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
-            <button type="submit" className="px-5 py-2 bg-slate-800 text-white text-sm font-semibold rounded-xl">
+            <button type="submit" className="px-4 py-2 bg-slate-800 text-white text-sm font-semibold rounded-xl hover:bg-slate-700 transition shrink-0">
               Search
             </button>
           </form>
-
-          <div className="w-full md:w-56">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border rounded-xl text-sm"
-            >
-              <option value="">All Statuses</option>
-              <option value="Borrowed">Active (Borrowed)</option>
-              <option value="Returned">Returned</option>
-            </select>
-          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full md:w-44 px-3 py-2 border rounded-xl text-sm"
+          >
+            <option value="">All Statuses</option>
+            <option value="Borrowed">Borrowed</option>
+            <option value="Returned">Returned</option>
+            <option value="Overdue">Overdue</option>
+          </select>
         </div>
 
-        {/* Transactions Table */}
+        {/* Table — desktop; cards — mobile */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-600 min-w-[700px]">
               <thead className="bg-slate-50 text-xs uppercase text-slate-400 border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-3">Loan ID</th>
-                  <th className="px-6 py-3">Book Title</th>
-                  <th className="px-6 py-3">Barcode</th>
-                  {isStaff && <th className="px-6 py-3">Borrower</th>}
-                  <th className="px-6 py-3">Borrow Date</th>
-                  <th className="px-6 py-3">Due Date</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
+                  <th className="px-5 py-3">Borrow ID</th>
+                  <th className="px-5 py-3">Book / Copy</th>
+                  {isStaff && <th className="px-5 py-3">Borrower</th>}
+                  <th className="px-5 py-3">Borrowed</th>
+                  <th className="px-5 py-3">Due Date</th>
+                  <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
-                  <tr>
-                    <td colSpan="8" className="text-center py-8 text-slate-400">Loading loan records...</td>
-                  </tr>
+                  <tr><td colSpan="7" className="text-center py-10 text-slate-400">Loading borrowing records...</td></tr>
                 ) : borrowings.length === 0 ? (
-                  <tr>
-                    <td colSpan="8" className="text-center py-8 text-slate-400">No borrowing records found.</td>
-                  </tr>
+                  <tr><td colSpan="7" className="text-center py-10 text-slate-400">No borrowing records found.</td></tr>
                 ) : (
                   borrowings.map((b) => {
                     const isOverdue = b.status === 'Borrowed' && new Date(b.due_date) < new Date();
                     return (
                       <tr key={b.borrow_id} className="hover:bg-slate-50 transition">
-                        <td className="px-6 py-3 font-mono font-bold text-slate-500">#{b.borrow_id}</td>
-                        <td className="px-6 py-3 font-semibold text-slate-900">{b.book_title}</td>
-                        <td className="px-6 py-3 font-mono text-xs text-indigo-600 font-bold">{b.barcode}</td>
+                        <td className="px-5 py-3 font-mono font-bold text-slate-500">#{b.borrow_id}</td>
+                        <td className="px-5 py-3">
+                          <p className="font-semibold text-slate-900 leading-tight">{b.book_title}</p>
+                          <p className="text-xs text-slate-400 font-mono">{b.barcode}</p>
+                        </td>
                         {isStaff && (
-                          <td className="px-6 py-3">
+                          <td className="px-5 py-3">
                             <p className="font-semibold text-slate-800 leading-tight">{b.borrower_name}</p>
-                            <p className="text-xs text-slate-400">{b.student_number || b.borrower_email}</p>
+                            <p className="text-xs text-slate-400">{b.borrower_email}</p>
                           </td>
                         )}
-                        <td className="px-6 py-3 text-xs">{new Date(b.borrow_date).toLocaleDateString()}</td>
-                        <td className="px-6 py-3 text-xs">
-                          <span className={isOverdue ? 'text-rose-600 font-bold' : ''}>
-                            {new Date(b.due_date).toLocaleDateString()}
+                        <td className="px-5 py-3 text-xs text-slate-500">{b.borrow_date ? new Date(b.borrow_date).toLocaleDateString() : '—'}</td>
+                        <td className={`px-5 py-3 text-xs font-semibold ${isOverdue ? 'text-rose-600' : 'text-slate-500'}`}>
+                          {b.due_date ? new Date(b.due_date).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="px-5 py-3">
+                          <span className={statusBadge(isOverdue ? 'Overdue' : b.status)}>
+                            {isOverdue ? 'Overdue' : b.status}
                           </span>
                         </td>
-                        <td className="px-6 py-3">
-                          <span
-                            className={`text-xs px-2.5 py-1 rounded-full font-bold ${
-                              b.status === 'Returned'
-                                ? 'bg-slate-100 text-slate-600'
-                                : isOverdue
-                                ? 'bg-rose-100 text-rose-800 animate-pulse'
-                                : 'bg-emerald-100 text-emerald-800'
-                            }`}
-                          >
-                            {isOverdue ? 'OVERDUE' : b.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-3 text-right">
-                          <div className="flex justify-end gap-2">
+                        <td className="px-5 py-3 text-right">
+                          <div className="flex justify-end gap-2 flex-wrap">
                             {b.status === 'Borrowed' && (
                               <>
-                                <button
-                                  onClick={() => handleRenew(b.borrow_id)}
-                                  className="text-xs text-indigo-600 hover:text-indigo-900 font-semibold px-2 py-1 bg-indigo-50 rounded"
-                                >
-                                  Renew (+14d)
-                                </button>
+                                <button onClick={() => handleRenew(b.borrow_id)} className="text-xs text-indigo-600 hover:text-indigo-900 font-semibold px-2 py-1 bg-indigo-50 rounded">Renew</button>
                                 {isStaff && (
-                                  <button
-                                    onClick={() => handleReturn(b.borrow_id)}
-                                    className="text-xs text-emerald-600 hover:text-emerald-900 font-semibold px-2 py-1 bg-emerald-50 rounded"
-                                  >
-                                    Return
-                                  </button>
+                                  <button onClick={() => handleReturn(b.borrow_id)} className="text-xs text-emerald-600 hover:text-emerald-900 font-semibold px-2 py-1 bg-emerald-50 rounded">Return</button>
                                 )}
                               </>
                             )}
                             {b.status === 'Returned' && (
-                              <span className="text-xs text-slate-400 font-mono">
-                                Returned {b.return_date ? new Date(b.return_date).toLocaleDateString() : ''}
-                              </span>
+                              <span className="text-xs text-slate-400 font-mono">Returned {b.return_date ? new Date(b.return_date).toLocaleDateString() : ''}</span>
                             )}
                           </div>
                         </td>
@@ -249,15 +241,52 @@ export default function Borrowings() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {loading ? (
+              <div className="text-center py-10 text-slate-400 text-sm">Loading...</div>
+            ) : borrowings.length === 0 ? (
+              <div className="text-center py-10 text-slate-400 text-sm">No borrowing records found.</div>
+            ) : (
+              borrowings.map((b) => {
+                const isOverdue = b.status === 'Borrowed' && new Date(b.due_date) < new Date();
+                return (
+                  <div key={b.borrow_id} className="p-4 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{b.book_title}</p>
+                        <p className="text-xs text-slate-400 font-mono">{b.barcode}</p>
+                      </div>
+                      <span className={statusBadge(isOverdue ? 'Overdue' : b.status)}>
+                        {isOverdue ? 'Overdue' : b.status}
+                      </span>
+                    </div>
+                    {isStaff && <p className="text-xs text-slate-600"><span className="font-semibold">Borrower:</span> {b.borrower_name}</p>}
+                    <div className="flex gap-4 text-xs text-slate-500">
+                      <span>Borrowed: {b.borrow_date ? new Date(b.borrow_date).toLocaleDateString() : '—'}</span>
+                      <span className={isOverdue ? 'text-rose-600 font-semibold' : ''}>Due: {b.due_date ? new Date(b.due_date).toLocaleDateString() : '—'}</span>
+                    </div>
+                    {b.status === 'Borrowed' && (
+                      <div className="flex gap-2">
+                        <button onClick={() => handleRenew(b.borrow_id)} className="text-xs text-indigo-600 font-semibold px-3 py-1.5 bg-indigo-50 rounded-lg">Renew</button>
+                        {isStaff && <button onClick={() => handleReturn(b.borrow_id)} className="text-xs text-emerald-600 font-semibold px-3 py-1.5 bg-emerald-50 rounded-lg">Return</button>}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
 
         {/* Issue Loan Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-start sm:items-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 my-4">
               <div className="flex justify-between items-center mb-4 pb-3 border-b">
                 <h3 className="font-bold text-slate-800 text-lg">Issue Book Copy to Borrower</h3>
-                <button onClick={() => setShowModal(false)} className="font-bold">✕</button>
+                <button onClick={() => setShowModal(false)} className="font-bold text-slate-500 hover:text-slate-800">✕</button>
               </div>
 
               <form onSubmit={handleCreateLoan} className="space-y-4">
@@ -310,18 +339,11 @@ export default function Borrowings() {
                   />
                 </div>
 
-                <div className="flex justify-end gap-2 pt-4 border-t">
-                  <button
-                    type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold"
-                  >
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4 border-t">
+                  <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-semibold">
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold shadow"
-                  >
+                  <button type="submit" className="px-5 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold shadow">
                     Complete Transaction
                   </button>
                 </div>

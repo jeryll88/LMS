@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import { useAuth } from '../auth/AuthContext';
 import api from '../api/client';
 import { Link } from 'react-router-dom';
+import BookCoverThumb from '../components/BookCoverThumb';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -190,9 +191,7 @@ export default function Dashboard() {
                   <div key={b.book_id} className="p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
                     <div>
                       <div className="flex justify-between items-start mb-3">
-                        <div className="w-12 h-16 rounded shadow-xs overflow-hidden shrink-0 bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
-                          {b.title.charAt(0)}
-                        </div>
+                        <BookCoverThumb isbn={b.isbn} title={b.title} className="w-12 h-16 shadow-xs overflow-hidden shrink-0" />
                         <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           {b.available_copies} Available
                         </span>

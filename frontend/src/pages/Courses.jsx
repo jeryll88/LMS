@@ -48,45 +48,55 @@ export default function Courses() {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h1 className="text-xl font-bold text-slate-800">Academic Courses & Degree Programs</h1>
+      <div className="space-y-5">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <h1 className="text-lg sm:text-xl font-bold text-slate-800">Academic Courses & Degree Programs</h1>
           <p className="text-xs text-slate-500 mt-0.5">Manage academic tracks linked to student enrollments</p>
         </div>
 
-        {message && <div className="p-4 bg-emerald-50 text-emerald-800 rounded-xl text-sm border border-emerald-200">✅ {message}</div>}
-        {error && <div className="p-4 bg-rose-50 text-rose-800 rounded-xl text-sm border border-rose-200">⚠️ {error}</div>}
+        {message && (
+          <div className="p-4 bg-emerald-50 text-emerald-800 rounded-xl text-sm border border-emerald-200 flex justify-between items-center">
+            <span>{message}</span>
+            <button onClick={() => setMessage('')} className="font-bold ml-2">✕</button>
+          </div>
+        )}
+        {error && (
+          <div className="p-4 bg-rose-50 text-rose-800 rounded-xl text-sm border border-rose-200 flex justify-between items-center">
+            <span>{error}</span>
+            <button onClick={() => setError('')} className="font-bold ml-2">✕</button>
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Add form */}
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-fit">
-            <h3 className="font-bold text-slate-800 mb-4">Add Course Program</h3>
-            <form onSubmit={handleAddCourse} className="space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Add Form */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm h-fit">
+            <h3 className="font-bold text-slate-800 mb-3 text-sm sm:text-base">Add Course Program</h3>
+            <form onSubmit={handleAddCourse} className="space-y-3.5 text-xs">
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">Course Code</label>
+                <label className="block font-semibold uppercase text-slate-600 mb-1">Course Code</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. BSCS, BSIT, BSA"
                   value={courseCode}
                   onChange={e => setCourseCode(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
+                  className="w-full px-3 py-2 border rounded-xl"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-600 mb-1">Full Program Name</label>
+                <label className="block font-semibold uppercase text-slate-600 mb-1">Full Program Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Bachelor of Science in Information Technology"
                   value={courseName}
                   onChange={e => setCourseName(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-xl text-sm"
+                  className="w-full px-3 py-2 border rounded-xl"
                 />
               </div>
               <button
                 type="submit"
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow"
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow transition"
               >
                 Save Course
               </button>
@@ -95,35 +105,39 @@ export default function Courses() {
 
           {/* Courses Table */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b">
-              <h3 className="font-bold text-slate-800">Existing Programs ({courses.length})</h3>
+            <div className="px-5 py-3.5 border-b border-slate-100">
+              <h3 className="font-bold text-slate-800 text-sm">Existing Programs ({courses.length})</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-600">
-                <thead className="bg-slate-50 text-xs uppercase text-slate-400 border-b">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-400 border-b border-slate-100">
                   <tr>
-                    <th className="px-6 py-3">Code</th>
-                    <th className="px-6 py-3">Course Name</th>
-                    <th className="px-6 py-3 text-right">Action</th>
+                    <th className="px-5 py-3">Code</th>
+                    <th className="px-5 py-3">Course Name</th>
+                    <th className="px-5 py-3 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-slate-100">
                   {loading ? (
-                    <tr><td colSpan="3" className="text-center py-6 text-slate-400">Loading courses...</td></tr>
-                  ) : courses.map(c => (
-                    <tr key={c.id} className="hover:bg-slate-50">
-                      <td className="px-6 py-3 font-mono font-bold text-indigo-600">{c.course_code}</td>
-                      <td className="px-6 py-3 font-medium text-slate-800">{c.course_name}</td>
-                      <td className="px-6 py-3 text-right">
-                        <button
-                          onClick={() => handleDeleteCourse(c.id, c.course_code)}
-                          className="text-xs text-rose-600 hover:text-rose-900 font-semibold px-2 py-1 bg-rose-50 rounded"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                    <tr><td colSpan="3" className="text-center py-8 text-slate-400">Loading courses...</td></tr>
+                  ) : courses.length === 0 ? (
+                    <tr><td colSpan="3" className="text-center py-8 text-slate-400">No courses defined.</td></tr>
+                  ) : (
+                    courses.map(c => (
+                      <tr key={c.id} className="hover:bg-slate-50 transition">
+                        <td className="px-5 py-3 font-mono font-bold text-slate-800 text-xs">{c.course_code}</td>
+                        <td className="px-5 py-3 text-xs sm:text-sm font-semibold text-slate-900">{c.course_name}</td>
+                        <td className="px-5 py-3 text-right">
+                          <button
+                            onClick={() => handleDeleteCourse(c.id, c.course_code)}
+                            className="text-xs text-rose-600 hover:text-rose-900 font-semibold px-2 py-1 bg-rose-50 rounded"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

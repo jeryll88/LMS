@@ -7,9 +7,9 @@ export default function Profile() {
 
   return (
     <Layout>
-      <div className="max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6">
-        <div className="flex items-center space-x-4 border-b border-slate-100 pb-6">
-          <div className="w-16 h-16 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-2xl shadow-lg">
+      <div className="max-w-2xl bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left space-y-3 sm:space-y-0 sm:space-x-4 border-b border-slate-100 pb-6">
+          <div className="w-16 h-16 rounded-full bg-indigo-600 text-white font-bold flex items-center justify-center text-2xl shadow-lg shrink-0">
             {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div>
@@ -21,7 +21,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
             <span className="text-xs text-slate-400 uppercase font-bold block">Account User ID</span>
             <span className="font-mono font-bold text-slate-800">#{user?.user_id || user?.id}</span>
