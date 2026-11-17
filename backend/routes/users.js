@@ -110,14 +110,15 @@ router.post('/', auth, requireRole('Admin'), async (req, res) => {
   }
 });
 
-// PUT /api/users/:id - Update user (Admin or Librarian or Self)
+// PUT /api/users/:id - Update user (Admin, Librarian, or Self)
 router.put('/:id', auth, async (req, res) => {
   const { id } = req.params;
   const currentUserId = req.user.user_id || req.user.id;
   const currentUserRole = req.user.role?.toLowerCase();
+  const isStaff = currentUserRole === 'admin' || currentUserRole === 'librarian';
   const isAdmin = currentUserRole === 'admin';
 
-  if (!isAdmin && parseInt(id) !== currentUserId) {
+  if (!isStaff && parseInt(id) !== currentUserId) {
     return res.status(403).json({ message: 'Forbidden' });
   }
 
@@ -134,7 +135,7 @@ router.put('/:id', auth, async (req, res) => {
     }
 
     const updatedRole = isAdmin && role ? role : existing.role;
-    const updatedStatus = isAdmin && is_active !== undefined ? is_active : existing.is_active;
+    const updatedStatus = isStaff && is_active !== undefined ? is_active : existing.is_active;
     const updatedEmpId = isAdmin && employee_id !== undefined ? employee_id : existing.employee_id;
 
     await db.query(
@@ -172,8 +173,8 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// DELETE /api/users/:id - Deactivate or Delete user (Admin only)
-router.delete('/:id', auth, requireRole('Admin'), async (req, res) => {
+// DELETE /api/users/:id - Deactivate or Delete user (Admin or Librarian)
+router.delete('/:id', auth, requireAnyRole(['Admin', 'Librarian']), async (req, res) => {
   const { id } = req.params;
   try {
     // Check if user has active borrowings

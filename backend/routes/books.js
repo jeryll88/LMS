@@ -178,6 +178,7 @@ router.delete('/:id', auth, requireAnyRole(['Admin', 'Librarian']), async (req, 
     }
 
     await db.query('BEGIN');
+    await db.query('DELETE FROM borrowing_records WHERE copy_id IN (SELECT copy_id FROM book_copies WHERE book_id = $1)', [id]);
     await db.query('DELETE FROM book_copies WHERE book_id = $1', [id]);
     await db.query('DELETE FROM reservations WHERE book_id = $1', [id]);
     const delRes = await db.query('DELETE FROM books WHERE book_id = $1 RETURNING book_id', [id]);

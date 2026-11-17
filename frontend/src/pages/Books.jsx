@@ -377,7 +377,13 @@ export default function Books() {
   const handleManualLookup = async () => {
     const rawIsbn = (currentBook.isbn || '').replace(/[- ]/g, '').trim();
     if (!rawIsbn) {
-      alert('Please enter or scan an ISBN first.');
+      Swal.fire({
+        icon: 'warning',
+        title: 'ISBN Missing',
+        text: 'Please enter or scan an ISBN first.',
+        timer: 2000,
+        showConfirmButton: false
+      });
       return;
     }
     setLookupLoading(true);
@@ -392,8 +398,19 @@ export default function Books() {
         publication_year: meta.publication_year || prev.publication_year,
         description: meta.description || prev.description,
       }));
+      Swal.fire({
+        icon: 'success',
+        title: 'Metadata Found',
+        text: `Loaded details for "${meta.title}"`,
+        timer: 1500,
+        showConfirmButton: false
+      });
     } else {
-      alert('No book metadata found for this ISBN. You can fill in the fields manually.');
+      Swal.fire({
+        icon: 'info',
+        title: 'Not Found',
+        text: 'No book metadata found for this ISBN. You can fill in the fields manually.'
+      });
     }
   };
 

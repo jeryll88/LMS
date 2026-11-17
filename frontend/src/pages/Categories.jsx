@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import api from '../api/client';
+import Swal from 'sweetalert2';
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
@@ -27,24 +28,56 @@ export default function Categories() {
     e.preventDefault();
     try {
       const res = await api.post('/api/categories', { category_name: name, category_type: type, description: desc });
-      setMessage(res.data.message || 'Category added');
+      Swal.fire({
+        icon: 'success',
+        title: 'Category Added!',
+        text: res.data.message || 'Category created successfully.',
+        timer: 1600,
+        showConfirmButton: false,
+      });
       setName('');
       setDesc('');
       loadCategories();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add category');
+      Swal.fire({
+        icon: 'error',
+        title: 'Add Failed',
+        text: err.response?.data?.message || 'Failed to add category.',
+      });
     }
   };
 
-  const handleDelete = async (id, catName) => {
-    if (!window.confirm(`Delete category ${catName}?`)) return;
-    try {
-      const res = await api.delete(`/api/categories/${id}`);
-      setMessage(res.data.message || 'Category deleted');
-      loadCategories();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
-    }
+  const handleDelete = (id, catName) => {
+    Swal.fire({
+      title: 'Delete Category?',
+      text: `Are you sure you want to delete category "${catName}"?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.delete(`/api/categories/${id}`);
+          Swal.fire({
+            icon: 'success',
+            title: 'Deleted!',
+            text: res.data.message || 'Category deleted successfully.',
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          loadCategories();
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Delete Failed',
+            text: err.response?.data?.message || 'Delete failed. Books may still be associated with this category.',
+          });
+        }
+      }
+    });
   };
 
   return (

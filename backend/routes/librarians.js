@@ -12,7 +12,8 @@ router.use(auth);
 router.get('/', requireAnyRole(['admin']), async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT l.*, u.email FROM librarians l JOIN users u ON l.user_id = u.id ORDER BY l.id`
+      `SELECT user_id AS id, user_id, full_name, email, username, employee_id, role, is_active, created_at 
+       FROM users WHERE LOWER(role) = 'librarian' ORDER BY user_id`
     );
     res.json({ librarians: result.rows });
   } catch (err) {
@@ -25,12 +26,14 @@ router.get('/', requireAnyRole(['admin']), async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   const requester = req.user;
-  if (requester.role !== 'admin' && requester.id !== parseInt(id)) {
+  const currentUserId = requester.user_id || requester.id;
+  if (requester.role?.toLowerCase() !== 'admin' && currentUserId !== parseInt(id)) {
     return res.status(403).json({ message: 'Forbidden' });
   }
   try {
     const result = await db.query(
-      `SELECT l.*, u.email FROM librarians l JOIN users u ON l.user_id = u.id WHERE l.id = $1`,
+      `SELECT user_id AS id, user_id, full_name, email, username, employee_id, role, is_active, created_at 
+       FROM users WHERE user_id = $1 AND LOWER(role) = 'librarian'`,
       [id]
     );
     if (!result.rowCount) return res.status(404).json({ message: 'Librarian not found' });

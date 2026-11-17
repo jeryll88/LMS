@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import api from '../api/client';
+import Swal from 'sweetalert2';
 
 export default function Users() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -123,31 +124,75 @@ export default function Users() {
     try {
       if (modalMode === 'add') {
         const res = await api.post('/api/users', currentUser);
-        setMessage(res.data.message || 'User created successfully');
+        Swal.fire({
+          icon: 'success',
+          title: 'User Created',
+          text: res.data.message || 'User created successfully',
+          timer: 1500,
+          showConfirmButton: false
+        });
       } else {
         const res = await api.put(`/api/users/${currentUser.user_id}`, currentUser);
-        setMessage(res.data.message || 'User updated successfully');
+        Swal.fire({
+          icon: 'success',
+          title: 'User Updated',
+          text: res.data.message || 'User updated successfully',
+          timer: 1500,
+          showConfirmButton: false
+        });
       }
       setShowModal(false);
       loadData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Operation failed');
+      Swal.fire({
+        icon: 'error',
+        title: 'Operation Failed',
+        text: err.response?.data?.message || 'Operation failed'
+      });
     }
   };
 
   const handleToggleDeactivate = async (userId, currentStatus) => {
-    if (!window.confirm(`Are you sure you want to ${currentStatus === 1 ? 'deactivate' : 'activate'} this user account?`)) return;
+    const actionText = currentStatus === 1 ? 'deactivate' : 'activate';
+    const result = await Swal.fire({
+      title: `${actionText === 'deactivate' ? 'Deactivate' : 'Activate'} User?`,
+      text: `Are you sure you want to ${actionText} this user account?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: actionText === 'deactivate' ? '#ef4444' : '#10b981',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: `Yes, ${actionText}`
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       if (currentStatus === 1) {
         await api.delete(`/api/users/${userId}`);
-        setMessage('User account deactivated');
+        Swal.fire({
+          icon: 'success',
+          title: 'Deactivated',
+          text: 'User account deactivated.',
+          timer: 1500,
+          showConfirmButton: false
+        });
       } else {
         await api.put(`/api/users/${userId}`, { is_active: 1 });
-        setMessage('User account activated');
+        Swal.fire({
+          icon: 'success',
+          title: 'Activated',
+          text: 'User account activated.',
+          timer: 1500,
+          showConfirmButton: false
+        });
       }
       loadData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Action failed');
+      Swal.fire({
+        icon: 'error',
+        title: 'Action Failed',
+        text: err.response?.data?.message || 'Action failed'
+      });
     }
   };
 

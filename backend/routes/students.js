@@ -12,7 +12,11 @@ router.use(auth, requireAnyRole(['admin', 'librarian']));
 router.get('/', async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT s.*, u.email FROM students s JOIN users u ON s.user_id = u.id ORDER BY s.id`
+      `SELECT s.*, u.user_id, u.email, u.username, u.full_name, u.is_active, c.name AS course_name, c.code AS course_code 
+       FROM students s 
+       LEFT JOIN users u ON u.student_id = s.id 
+       LEFT JOIN courses c ON s.course_id = c.id
+       ORDER BY s.id`
     );
     res.json({ students: result.rows });
   } catch (err) {
@@ -26,7 +30,11 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await db.query(
-      `SELECT s.*, u.email FROM students s JOIN users u ON s.user_id = u.id WHERE s.id = $1`,
+      `SELECT s.*, u.user_id, u.email, u.username, u.full_name, u.is_active, c.name AS course_name, c.code AS course_code 
+       FROM students s 
+       LEFT JOIN users u ON u.student_id = s.id 
+       LEFT JOIN courses c ON s.course_id = c.id
+       WHERE s.id = $1`,
       [id]
     );
     if (!result.rowCount) return res.status(404).json({ message: 'Student not found' });

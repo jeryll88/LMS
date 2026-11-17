@@ -180,10 +180,15 @@ router.delete('/:id', auth, requireAnyRole(['Admin', 'Librarian']), async (req, 
       return res.status(400).json({ message: 'Cannot delete copy: It is currently checked out to a borrower.' });
     }
 
+    await db.query('BEGIN');
+    await db.query('DELETE FROM borrowing_records WHERE copy_id = $1', [id]);
     const result = await db.query('DELETE FROM book_copies WHERE copy_id = $1 RETURNING copy_id', [id]);
+    await db.query('COMMIT');
+
     if (result.rowCount === 0) return res.status(404).json({ message: 'Copy not found' });
     res.json({ message: 'Physical copy deleted successfully' });
   } catch (err) {
+    await db.query('ROLLBACK');
     console.error('Delete copy error:', err);
     res.status(500).json({ message: 'Failed to delete copy: ' + err.message });
   }

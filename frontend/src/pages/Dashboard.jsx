@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import api from '../api/client';
 import { Link } from 'react-router-dom';
 import BookCoverThumb from '../components/BookCoverThumb';
+import Swal from 'sweetalert2';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -52,9 +53,19 @@ export default function Dashboard() {
   const handleReserve = async (bookId, title) => {
     try {
       await api.post('/api/reservations', { book_id: bookId });
-      alert(`Reservation placed for "${title}"!`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Reservation Placed',
+        text: `Reservation placed for "${title}"!`,
+        timer: 2000,
+        showConfirmButton: false
+      });
     } catch (err) {
-      alert(err.response?.data?.message || 'Reservation failed');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Reservation Failed',
+        text: err.response?.data?.message || 'Reservation failed'
+      });
     }
   };
 

@@ -1,12 +1,11 @@
 const express = require('express');
 const db = require('../db');
 const auth = require('../middleware/auth');
+const { requireAnyRole } = require('../middleware/role');
 
 const router = express.Router();
 
-router.use(auth);
-
-// GET /api/categories - List categories
+// GET /api/categories - List categories (Public for book catalog browsing)
 router.get('/', async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM categories ORDER BY category_name ASC');
@@ -17,7 +16,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/categories/:id
+// GET /api/categories/:id - Get single category (Public)
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -29,6 +28,9 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch category: ' + err.message });
   }
 });
+
+// Protect modifying routes (Staff only)
+router.use(auth, requireAnyRole(['Admin', 'Librarian']));
 
 // POST /api/categories - Add category
 router.post('/', async (req, res) => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import api from '../api/client';
+import Swal from 'sweetalert2';
 
 export default function Courses() {
   const [courses, setCourses] = useState([]);
@@ -26,24 +27,56 @@ export default function Courses() {
     e.preventDefault();
     try {
       const res = await api.post('/api/courses', { course_code: courseCode, course_name: courseName });
-      setMessage(res.data.message || 'Course added');
+      Swal.fire({
+        icon: 'success',
+        title: 'Course Added!',
+        text: res.data.message || 'Academic program added successfully.',
+        timer: 1600,
+        showConfirmButton: false,
+      });
       setCourseCode('');
       setCourseName('');
       loadCourses();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to add course');
+      Swal.fire({
+        icon: 'error',
+        title: 'Add Failed',
+        text: err.response?.data?.message || 'Failed to add course.',
+      });
     }
   };
 
-  const handleDeleteCourse = async (id, code) => {
-    if (!window.confirm(`Delete course ${code}?`)) return;
-    try {
-      const res = await api.delete(`/api/courses/${id}`);
-      setMessage(res.data.message || 'Course deleted');
-      loadCourses();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Delete failed');
-    }
+  const handleDeleteCourse = (id, code) => {
+    Swal.fire({
+      title: 'Delete Course Program?',
+      text: `Are you sure you want to delete course ${code}?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'Cancel',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.delete(`/api/courses/${id}`);
+          Swal.fire({
+            icon: 'success',
+            title: 'Deleted!',
+            text: res.data.message || 'Course program deleted.',
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          loadCourses();
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Delete Failed',
+            text: err.response?.data?.message || 'Failed to delete course.',
+          });
+        }
+      }
+    });
   };
 
   return (
