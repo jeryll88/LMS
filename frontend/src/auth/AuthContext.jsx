@@ -14,8 +14,16 @@ export const AuthProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Fetch verified session on mount
+  // Fetch verified session on mount only if a token exists
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setUser(null);
+      localStorage.removeItem('user');
+      setLoading(false);
+      return;
+    }
+
     api
       .get('/api/auth/me')
       .then((res) => {

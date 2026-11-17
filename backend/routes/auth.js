@@ -172,15 +172,97 @@ router.get('/me', require('../middleware/auth'), async (req, res) => {
   }
 });
 
-// Password recovery stubs
+// Password recovery routes
 router.post('/forgot-password', async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ message: 'Email required' });
-  res.json({ message: 'If that email exists in our records, a password reset instruction has been dispatched.' });
+  const { identifier } = req.body;
+  if (!identifier) return res.status(400).json({ message: 'Username or email is required.' });
+
+  try {
+    const userRes = await db.query(
+      `SELECT u.user_id, u.username, u.full_name, u.email, u.role, s.student_number
+       FROM users u
+       LEFT JOIN students s ON u.student_id = s.id
+       WHERE LOWER(u.email) = LOWER($1) OR LOWER(u.username) = LOWER($1)`,
+      [identifier.trim()]
+    );
+
+    if (userRes.rowCount === 0) {
+      return res.status(404).json({ message: 'No account found with this username or email.' });
+    }
+
+    const user = userRes.rows[0];
+    res.json({
+      exists: true,
+      username: user.username,
+      full_name: user.full_name,
+      role: user.role,
+      has_student_number: !!user.student_number,
+      message: `Account verified for ${user.full_name}. You may proceed to set a new password.`
+    });
+  } catch (err) {
+    console.error('Forgot password lookup error:', err);
+    res.status(500).json({ message: 'Account lookup error: ' + err.message });
+  }
 });
 
 router.post('/reset-password', async (req, res) => {
-  res.json({ message: 'Password reset feature ready for integration.' });
+  const { identifier, verification, new_password } = req.body;
+  if (!identifier || !new_password) {
+    return res.status(400).json({ message: 'Username or email and new password are required.' });
+  }
+
+  if (new_password.length < 6) {
+    return res.status(400).json({ message: 'New password must be at least 6 characters long.' });
+  }
+
+  try {
+    const userRes = await db.query(
+      `SELECT u.user_id, u.username, u.full_name, u.email, u.employee_id, u.role,
+              s.student_number
+       FROM users u
+       LEFT JOIN students s ON u.student_id = s.id
+       WHERE LOWER(u.email) = LOWER($1) OR LOWER(u.username) = LOWER($1)`,
+      [identifier.trim()]
+    );
+
+    if (userRes.rowCount === 0) {
+      return res.status(404).json({ message: 'No registered account found with this username or email.' });
+    }
+
+    const user = userRes.rows[0];
+
+    // Optional verification check: if user is student and provided verification (student number or email)
+    if (verification && verification.trim()) {
+      const v = verification.trim().toLowerCase();
+      const matchStudentNum = user.student_number && user.student_number.toLowerCase() === v;
+      const matchEmail = user.email && user.email.toLowerCase() === v;
+      const matchEmpId = user.employee_id && user.employee_id.toLowerCase() === v;
+      const matchUsername = user.username && user.username.toLowerCase() === v;
+
+      if (!matchStudentNum && !matchEmail && !matchEmpId && !matchUsername) {
+        return res.status(400).json({
+          message: 'Verification failed: Student Number / Email does not match our records for this account.'
+        });
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+    await db.query('UPDATE users SET password_hash = $1 WHERE user_id = $2', [hashedPassword, user.user_id]);
+
+    logActivity(
+      user.user_id,
+      user.username,
+      user.user_id,
+      user.username,
+      'PASSWORD_RESET',
+      `User ${user.username} successfully reset their password.`
+    );
+
+    res.json({ message: 'Password reset successfully! You can now log in with your new password.' });
+  } catch (err) {
+    console.error('Password reset error:', err);
+    res.status(500).json({ message: 'Failed to reset password: ' + err.message });
+  }
 });
 
 module.exports = router;
