@@ -18,6 +18,7 @@ export default function Dashboard() {
   const [courses, setCourses] = useState([]);
   const [borrowings, setBorrowings] = useState([]);
   const [featuredBooks, setFeaturedBooks] = useState([]);
+  const [reservedBookIds, setReservedBookIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function Dashboard() {
       requests.push(api.get('/api/courses'));
     } else {
       requests.push(api.get('/api/books?limit=6'));
+      requests.push(api.get('/api/reservations').catch(() => ({ data: { reservations: [] } })));
     }
 
     Promise.all(requests)
@@ -44,11 +46,26 @@ export default function Dashboard() {
           if (coursesRes) setCourses(coursesRes.data.courses || []);
         } else {
           if (usersRes) setFeaturedBooks(usersRes.data.books || []);
+          if (libRes?.data?.reservations) {
+            const active = libRes.data.reservations.filter(
+              (r) => r.status === 'Pending' || r.status === 'Approved'
+            );
+            setReservedBookIds(new Set(active.map((r) => r.book_id)));
+          }
         }
       })
       .catch((err) => console.error('Dashboard load error:', err))
       .finally(() => setLoading(false));
   }, []);
+
+  const handleAlreadyReserved = (title) => {
+    Swal.fire({
+      icon: 'info',
+      title: 'Already Reserved',
+      text: `You have already reserved "${title}". You can track it under My Reservations.`,
+      confirmButtonColor: '#2563eb'
+    });
+  };
 
   const handleReserve = async (bookId, title) => {
     try {
@@ -60,6 +77,7 @@ export default function Dashboard() {
         timer: 2000,
         showConfirmButton: false
       });
+      setReservedBookIds((prev) => new Set([...prev, bookId]));
     } catch (err) {
       Swal.fire({
         icon: 'warning',
@@ -216,12 +234,26 @@ export default function Dashboard() {
                       <Link to="/books" className="text-xs text-slate-500 hover:text-slate-800 font-medium">
                         Details
                       </Link>
-                      <button
-                        onClick={() => handleReserve(b.book_id, b.title)}
-                        className="px-3 py-1 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded text-xs font-semibold shadow-xs transition"
-                      >
-                        Reserve
-                      </button>
+                      {reservedBookIds.has(b.book_id) ? (
+                        <button
+                          type="button"
+                          onClick={() => handleAlreadyReserved(b.title)}
+                          className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-semibold shadow-xs transition flex items-center space-x-1"
+                          title="You have already reserved this book"
+                        >
+                          <svg className="w-3 h-3 fill-current" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          <span>Reserved</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleReserve(b.book_id, b.title)}
+                          className="px-3 py-1 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded text-xs font-semibold shadow-xs transition"
+                        >
+                          Reserve
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
