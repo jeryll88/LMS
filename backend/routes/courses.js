@@ -5,9 +5,7 @@ const { requireRole } = require('../middleware/role');
 
 const router = express.Router();
 
-router.use(auth);
-
-// GET /api/courses - List all courses (Accessible to all authenticated users)
+// GET /api/courses - List all courses (Public so registration & catalog can display courses)
 router.get('/', async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM courses ORDER BY course_code ASC');
@@ -18,7 +16,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/courses/:id
+// GET /api/courses/:id - Get course details (Public)
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -30,6 +28,9 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch course: ' + err.message });
   }
 });
+
+// Protected routes (Admin only for modifications)
+router.use(auth);
 
 // POST /api/courses - Add course (Admin only)
 router.post('/', requireRole('Admin'), async (req, res) => {
