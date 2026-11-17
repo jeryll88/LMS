@@ -260,8 +260,11 @@ router.post('/:id/return', auth, async (req, res) => {
       [returnDate, id]
     );
 
-    // Update copy status back to Available
+    // Update copy status back to Available (restores available copies count on shelf)
     await db.query("UPDATE book_copies SET status = 'Available' WHERE copy_id = $1", [record.copy_id]);
+
+    // Also update any linked reservation
+    await db.query("UPDATE reservations SET status = 'Fulfilled' WHERE copy_id = $1 AND status = 'Approved'", [record.copy_id]);
 
     // Check if there are pending reservations for this book, and notify the next student in queue
     const nextReservation = await db.query(
@@ -271,12 +274,11 @@ router.post('/:id/return', auth, async (req, res) => {
 
     if (nextReservation.rowCount > 0) {
       const nextUser = nextReservation.rows[0];
-      await db.query("UPDATE reservations SET status = 'Approved' WHERE reservation_id = $1", [nextUser.reservation_id]);
       createNotification(
         nextUser.user_id,
         'RESERVATION_AVAILABLE',
-        'Reserved Book is Now Available!',
-        `Good news! "${record.title}" has been returned and is waiting for you to borrow at the library.`,
+        'Reserved Book is Back on Shelf!',
+        `Good news! A physical copy of "${record.title}" has been returned and is available at the library.`,
         '/reservations'
       );
     }

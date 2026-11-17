@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../auth/AuthContext';
 import api from '../api/client';
+import Swal from 'sweetalert2';
 
 export default function Reservations() {
   const { user } = useAuth();
@@ -58,12 +59,22 @@ export default function Reservations() {
         status: 'Approved',
         due_date: dueDate,
       });
-      setMessage(res.data.message || `Reservation approved! Return due date set to ${new Date(dueDate).toLocaleDateString()}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Reservation Approved!',
+        text: res.data.message || `Return due date set to ${new Date(dueDate).toLocaleDateString()}. One physical copy is now checked out to the student.`,
+        timer: 2000,
+        showConfirmButton: false,
+      });
       setShowApproveModal(false);
       setSelectedResv(null);
       loadData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to approve reservation');
+      Swal.fire({
+        icon: 'error',
+        title: 'Approval Failed',
+        text: err.response?.data?.message || 'Failed to approve reservation.',
+      });
     } finally {
       setSubmittingApproval(false);
     }
@@ -72,22 +83,54 @@ export default function Reservations() {
   const handleUpdateStatus = async (resvId, newStatus) => {
     try {
       const res = await api.put(`/api/reservations/${resvId}`, { status: newStatus });
-      setMessage(res.data.message || 'Status updated');
+      Swal.fire({
+        icon: 'success',
+        title: 'Status Updated',
+        text: res.data.message || `Reservation status updated to ${newStatus}.`,
+        timer: 1600,
+        showConfirmButton: false,
+      });
       loadData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Update failed');
+      Swal.fire({
+        icon: 'error',
+        title: 'Update Failed',
+        text: err.response?.data?.message || 'Update failed.',
+      });
     }
   };
 
-  const handleCancel = async (resvId) => {
-    if (!window.confirm('Cancel this reservation?')) return;
-    try {
-      const res = await api.delete(`/api/reservations/${resvId}`);
-      setMessage(res.data.message || 'Reservation cancelled');
-      loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Cancellation failed');
-    }
+  const handleCancel = (resvId) => {
+    Swal.fire({
+      title: 'Cancel Reservation?',
+      text: 'Are you sure you want to cancel this reservation? If a physical copy was allocated, it will be restored to the shelves.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, cancel it',
+      cancelButtonText: 'No, keep it',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.delete(`/api/reservations/${resvId}`);
+          Swal.fire({
+            icon: 'success',
+            title: 'Cancelled',
+            text: res.data.message || 'Reservation cancelled and shelf copy restored.',
+            timer: 1600,
+            showConfirmButton: false,
+          });
+          loadData();
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Cancellation Failed',
+            text: err.response?.data?.message || 'Cancellation failed.',
+          });
+        }
+      }
+    });
   };
 
   const statusBadge = (status) => {

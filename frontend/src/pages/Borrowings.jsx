@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../auth/AuthContext';
 import api from '../api/client';
+import Swal from 'sweetalert2';
 
 export default function Borrowings() {
   const { user } = useAuth();
@@ -60,24 +61,56 @@ export default function Borrowings() {
     loadData();
   };
 
-  const handleReturn = async (borrowId) => {
-    if (!window.confirm('Process return for this book copy?')) return;
-    try {
-      const res = await api.post(`/api/borrowings/${borrowId}/return`);
-      setMessage(res.data.message || 'Book returned successfully');
-      loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Return processing failed');
-    }
+  const handleReturn = (borrowId, bookTitle) => {
+    Swal.fire({
+      title: 'Return Book Copy?',
+      text: `Confirm return for "${bookTitle || 'this book'}"? This will return the physical copy to the library shelves and restore the available copies count.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, return book',
+      cancelButtonText: 'Cancel',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.post(`/api/borrowings/${borrowId}/return`);
+          Swal.fire({
+            icon: 'success',
+            title: 'Book Returned!',
+            text: res.data.message || 'Book copy returned to shelf successfully.',
+            timer: 1800,
+            showConfirmButton: false,
+          });
+          loadData();
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Return Failed',
+            text: err.response?.data?.message || 'Return processing failed.',
+          });
+        }
+      }
+    });
   };
 
   const handleRenew = async (borrowId) => {
     try {
       const res = await api.post(`/api/borrowings/${borrowId}/renew`);
-      setMessage(res.data.message || 'Loan renewed successfully (+7 days added to due date)');
+      Swal.fire({
+        icon: 'success',
+        title: 'Loan Renewed!',
+        text: res.data.message || 'Loan renewed successfully (+7 days added to due date).',
+        timer: 1800,
+        showConfirmButton: false,
+      });
       loadData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Renewal failed');
+      Swal.fire({
+        icon: 'error',
+        title: 'Renewal Failed',
+        text: err.response?.data?.message || 'Renewal failed.',
+      });
     }
   };
 
@@ -85,11 +118,21 @@ export default function Borrowings() {
     e.preventDefault();
     try {
       const res = await api.post('/api/borrowings', newLoan);
-      setMessage(res.data.message || 'Borrowing registered');
+      Swal.fire({
+        icon: 'success',
+        title: 'Loan Issued!',
+        text: res.data.message || 'Borrowing registered successfully.',
+        timer: 1800,
+        showConfirmButton: false,
+      });
       setShowModal(false);
       loadData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to issue book');
+      Swal.fire({
+        icon: 'error',
+        title: 'Failed to Issue Book',
+        text: err.response?.data?.message || 'Failed to issue book.',
+      });
     }
   };
 
@@ -311,14 +354,12 @@ export default function Borrowings() {
                                 >
                                   Renew
                                 </button>
-                                {isStaff && (
-                                  <button
-                                    onClick={() => handleReturn(b.borrow_id)}
-                                    className="text-xs text-emerald-600 hover:text-emerald-900 font-semibold px-2 py-1 bg-emerald-50 rounded"
-                                  >
-                                    Return
-                                  </button>
-                                )}
+                                <button
+                                  onClick={() => handleReturn(b.borrow_id, b.book_title)}
+                                  className="text-xs text-emerald-600 hover:text-emerald-900 font-semibold px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 rounded transition"
+                                >
+                                  Return
+                                </button>
                               </>
                             )}
                             {b.status === 'Returned' && (
@@ -388,7 +429,7 @@ export default function Borrowings() {
                     {b.status === 'Borrowed' && (
                       <div className="flex gap-2 pt-1">
                         <button onClick={() => handleRenew(b.borrow_id)} className="text-xs text-blue-600 font-semibold px-3 py-1.5 bg-blue-50 rounded-lg">Renew Loan (+7d)</button>
-                        {isStaff && <button onClick={() => handleReturn(b.borrow_id)} className="text-xs text-emerald-600 font-semibold px-3 py-1.5 bg-emerald-50 rounded-lg">Return</button>}
+                        <button onClick={() => handleReturn(b.borrow_id, b.book_title)} className="text-xs text-emerald-600 font-semibold px-3 py-1.5 bg-emerald-50 rounded-lg">Return Book</button>
                       </div>
                     )}
                   </div>

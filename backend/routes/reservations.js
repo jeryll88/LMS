@@ -132,34 +132,100 @@ router.post('/', auth, async (req, res) => {
 // PUT /api/reservations/:id - Update reservation status & return due date (Admin or Librarian)
 router.put('/:id', auth, requireAnyRole(['Admin', 'Librarian']), async (req, res) => {
   const { id } = req.params;
+  const staffUserId = req.user.user_id || req.user.id;
   const { status, due_date } = req.body; // 'Pending', 'Approved', 'Cancelled', 'Fulfilled'
 
   if (!status) return res.status(400).json({ message: 'Status is required' });
 
   try {
+    await db.query('BEGIN');
+
     const resvCheck = await db.query(
       `SELECT r.*, b.title, u.email, u.full_name 
        FROM reservations r 
        JOIN books b ON r.book_id = b.book_id 
        JOIN users u ON r.user_id = u.user_id 
-       WHERE r.reservation_id = $1`,
+       WHERE r.reservation_id = $1 FOR UPDATE`,
       [id]
     );
-    if (resvCheck.rowCount === 0) return res.status(404).json({ message: 'Reservation not found' });
+    if (resvCheck.rowCount === 0) {
+      await db.query('ROLLBACK');
+      return res.status(404).json({ message: 'Reservation not found' });
+    }
     const resv = resvCheck.rows[0];
+
+    let allocatedCopyId = resv.copy_id;
+
+    // IF CHANGING TO APPROVED OR FULFILLED: Allocate an available copy and mark it as Borrowed
+    if (status === 'Approved' || status === 'Fulfilled') {
+      if (!allocatedCopyId) {
+        // Find first available physical copy of this book
+        const availCopyRes = await db.query(
+          `SELECT copy_id, barcode FROM book_copies 
+           WHERE book_id = $1 AND status = 'Available' 
+           ORDER BY copy_id ASC LIMIT 1 FOR UPDATE`,
+          [resv.book_id]
+        );
+
+        if (availCopyRes.rowCount === 0) {
+          await db.query('ROLLBACK');
+          return res.status(400).json({ message: 'No available physical copies left on shelf for this book.' });
+        }
+
+        allocatedCopyId = availCopyRes.rows[0].copy_id;
+      }
+
+      // Mark the physical copy as Borrowed (decreases available copies on shelf)
+      await db.query("UPDATE book_copies SET status = 'Borrowed' WHERE copy_id = $1", [allocatedCopyId]);
+
+      // Calculate due date
+      const targetDueDate = due_date || resv.due_date || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+      // Check if a borrowing record already exists for this copy and user
+      const existingBorrow = await db.query(
+        "SELECT borrow_id FROM borrowing_records WHERE user_id = $1 AND copy_id = $2 AND status = 'Borrowed'",
+        [resv.user_id, allocatedCopyId]
+      );
+
+      if (existingBorrow.rowCount === 0) {
+        // Insert active borrowing record so it appears under My Borrowings and librarian loan logs
+        await db.query(
+          `INSERT INTO borrowing_records (user_id, copy_id, issued_by, borrow_date, due_date, status, created_at)
+           VALUES ($1, $2, $3, NOW(), $4, 'Borrowed', NOW())`,
+          [resv.user_id, allocatedCopyId, staffUserId, targetDueDate]
+        );
+      } else {
+        await db.query(
+          "UPDATE borrowing_records SET due_date = $1 WHERE borrow_id = $2",
+          [targetDueDate, existingBorrow.rows[0].borrow_id]
+        );
+      }
+    }
+
+    // IF CHANGING TO CANCELLED: Free up the allocated copy back to Available
+    if (status === 'Cancelled' && allocatedCopyId) {
+      await db.query("UPDATE book_copies SET status = 'Available' WHERE copy_id = $1", [allocatedCopyId]);
+      await db.query(
+        "UPDATE borrowing_records SET status = 'Returned', return_date = NOW() WHERE copy_id = $1 AND user_id = $2 AND status = 'Borrowed'",
+        [allocatedCopyId, resv.user_id]
+      );
+      allocatedCopyId = null;
+    }
 
     let result;
     if (due_date) {
       result = await db.query(
-        `UPDATE reservations SET status = $1, due_date = $2 WHERE reservation_id = $3 RETURNING *`,
-        [status, due_date, id]
+        `UPDATE reservations SET status = $1, due_date = $2, copy_id = $3 WHERE reservation_id = $4 RETURNING *`,
+        [status, due_date, allocatedCopyId, id]
       );
     } else {
       result = await db.query(
-        `UPDATE reservations SET status = $1 WHERE reservation_id = $2 RETURNING *`,
-        [status, id]
+        `UPDATE reservations SET status = $1, copy_id = $2 WHERE reservation_id = $3 RETURNING *`,
+        [status, allocatedCopyId, id]
       );
     }
+
+    await db.query('COMMIT');
 
     const formattedDate = due_date ? new Date(due_date).toLocaleDateString() : (resv.due_date ? new Date(resv.due_date).toLocaleDateString() : '');
 
@@ -191,28 +257,47 @@ router.put('/:id', auth, requireAnyRole(['Admin', 'Librarian']), async (req, res
         : `Reservation status updated to ${status}.`
     });
   } catch (err) {
+    await db.query('ROLLBACK');
     console.error('Update reservation error:', err);
     res.status(500).json({ message: 'Failed to update reservation: ' + err.message });
   }
 });
 
-// DELETE /api/reservations/:id - Cancel reservation
+// DELETE /api/reservations/:id - Cancel reservation and restore copy availability
 router.delete('/:id', auth, async (req, res) => {
   const { id } = req.params;
   const currentUserId = req.user.user_id || req.user.id;
   const role = req.user.role?.toLowerCase();
 
   try {
-    const resv = await db.query('SELECT * FROM reservations WHERE reservation_id = $1', [id]);
-    if (resv.rowCount === 0) return res.status(404).json({ message: 'Reservation not found' });
+    await db.query('BEGIN');
+    const resvCheck = await db.query('SELECT * FROM reservations WHERE reservation_id = $1 FOR UPDATE', [id]);
+    if (resvCheck.rowCount === 0) {
+      await db.query('ROLLBACK');
+      return res.status(404).json({ message: 'Reservation not found' });
+    }
+    const resv = resvCheck.rows[0];
 
-    if (role !== 'admin' && role !== 'librarian' && resv.rows[0].user_id !== currentUserId) {
+    if (role !== 'admin' && role !== 'librarian' && resv.user_id !== currentUserId) {
+      await db.query('ROLLBACK');
       return res.status(403).json({ message: 'Forbidden' });
     }
 
-    await db.query("UPDATE reservations SET status = 'Cancelled' WHERE reservation_id = $1", [id]);
-    res.json({ message: 'Reservation cancelled successfully' });
+    // If a copy was allocated to this reservation, restore it back to Available
+    if (resv.copy_id) {
+      await db.query("UPDATE book_copies SET status = 'Available' WHERE copy_id = $1", [resv.copy_id]);
+      await db.query(
+        "UPDATE borrowing_records SET status = 'Returned', return_date = NOW() WHERE copy_id = $1 AND user_id = $2 AND status = 'Borrowed'",
+        [resv.copy_id, resv.user_id]
+      );
+    }
+
+    await db.query("UPDATE reservations SET status = 'Cancelled', copy_id = NULL WHERE reservation_id = $1", [id]);
+    await db.query('COMMIT');
+
+    res.json({ message: 'Reservation cancelled successfully and book copy returned to shelf.' });
   } catch (err) {
+    await db.query('ROLLBACK');
     console.error('Cancel reservation error:', err);
     res.status(500).json({ message: 'Failed to cancel reservation: ' + err.message });
   }

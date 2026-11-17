@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import { useAuth } from '../auth/AuthContext';
 import api from '../api/client';
 import BookCoverThumb from '../components/BookCoverThumb';
+import Swal from 'sweetalert2';
 
 export default function Books() {
   const { user } = useAuth();
@@ -340,17 +341,37 @@ export default function Books() {
   };
 
   // DELETE (in CRUD)
-  const handleDeleteBook = async (bookId, title) => {
-    if (!window.confirm(`Are you sure you want to delete "${title}"? This will delete all physical copies and reservation records. Note: Books with active borrowings cannot be deleted.`)) {
-      return;
-    }
-    try {
-      const res = await api.delete(`/api/books/${bookId}`);
-      setMessage(res.data.message || 'Book deleted successfully');
-      loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete book');
-    }
+  const handleDeleteBook = (bookId, title) => {
+    Swal.fire({
+      title: 'Delete Book?',
+      text: `Are you sure you want to delete "${title}"? This will delete all physical copies and reservation records. Note: Books with active borrowings cannot be deleted.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'Cancel',
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const res = await api.delete(`/api/books/${bookId}`);
+          Swal.fire({
+            icon: 'success',
+            title: 'Deleted!',
+            text: res.data.message || 'Book deleted successfully.',
+            timer: 1600,
+            showConfirmButton: false,
+          });
+          loadData();
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: 'Delete Failed',
+            text: err.response?.data?.message || 'Failed to delete book.',
+          });
+        }
+      }
+    });
   };
 
   const handleManualLookup = async () => {
@@ -382,14 +403,25 @@ export default function Books() {
     try {
       if (modalMode === 'add') {
         const res = await api.post('/api/books', currentBook);
-        setMessage(res.data.message || 'Book added successfully');
-        // Prepend the new book to the top of the list immediately
+        Swal.fire({
+          icon: 'success',
+          title: 'Book Added!',
+          text: res.data.message || 'Book added successfully.',
+          timer: 1600,
+          showConfirmButton: false,
+        });
         if (res.data.book) {
           setBooks((prev) => [res.data.book, ...prev.filter((b) => b.book_id !== res.data.book.book_id)]);
         }
       } else {
         const res = await api.put(`/api/books/${currentBook.book_id}`, currentBook);
-        setMessage(res.data.message || 'Book updated successfully');
+        Swal.fire({
+          icon: 'success',
+          title: 'Book Updated!',
+          text: res.data.message || 'Book updated successfully.',
+          timer: 1600,
+          showConfirmButton: false,
+        });
       }
       setShowModal(false);
       loadData();
@@ -401,10 +433,19 @@ export default function Books() {
   const handleReserve = async (bookId, title) => {
     try {
       const res = await api.post('/api/reservations', { book_id: bookId });
-      setMessage(res.data.message || `Reservation request submitted for "${title}"`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Reservation Submitted!',
+        text: res.data.message || `Reservation request for "${title}" has been submitted for librarian approval.`,
+        confirmButtonColor: '#2563eb',
+      });
       loadData();
     } catch (err) {
-      setError(err.response?.data?.message || 'Reservation failed');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Cannot Reserve',
+        text: err.response?.data?.message || 'Reservation failed.',
+      });
     }
   };
 
