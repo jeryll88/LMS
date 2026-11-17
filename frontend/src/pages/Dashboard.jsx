@@ -299,47 +299,95 @@ export default function Dashboard() {
 
             {/* 6 Metric Stat Cards with Professional SVG Icons */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-              {/* Card 1: Total Individuals / Users */}
-              <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">TOTAL INDIVIDUALS</p>
-                  <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_users || 0}</p>
-                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">All accounts</p>
-                </div>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 20 20">
-                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                  </svg>
-                </div>
-              </div>
+              {isAdmin ? (
+                <>
+                  {/* Card 1: Total Users (Admin Only) */}
+                  <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">TOTAL USERS</p>
+                      <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_users || 0}</p>
+                      <p className="text-[10px] text-slate-400 font-medium mt-0.5">All accounts</p>
+                    </div>
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 20 20">
+                        <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                      </svg>
+                    </div>
+                  </div>
 
-              {/* Card 2: Students */}
-              <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">STUDENTS</p>
-                  <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_students || 0}</p>
-                  <p className="text-[10px] text-indigo-500 font-medium mt-0.5">Enrolled</p>
-                </div>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 24 24">
-                    <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
-                  </svg>
-                </div>
-              </div>
+                  {/* Card 2: Students */}
+                  <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">STUDENTS</p>
+                      <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_students || 0}</p>
+                      <p className="text-[10px] text-indigo-500 font-medium mt-0.5">Enrolled</p>
+                    </div>
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
+                      </svg>
+                    </div>
+                  </div>
 
-              {/* Card 3: Librarians */}
-              <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">LIBRARIANS</p>
-                  <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_librarians || 0}</p>
-                  <p className="text-[10px] text-purple-500 font-medium mt-0.5">Staff & Admin</p>
-                </div>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </div>
+                  {/* Card 3: Librarians */}
+                  <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">LIBRARIANS</p>
+                      <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_librarians || 0}</p>
+                      <p className="text-[10px] text-purple-500 font-medium mt-0.5">Staff & Admin</p>
+                    </div>
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Card 1 for Librarian: Total Students Only (No total users) */}
+                  <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">STUDENTS</p>
+                      <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_students || 0}</p>
+                      <p className="text-[10px] text-indigo-500 font-medium mt-0.5">Enrolled</p>
+                    </div>
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 24 24">
+                        <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Card 2 for Librarian: Shelf Available Copies */}
+                  <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">SHELF COPIES</p>
+                      <p className="text-2xl font-black text-emerald-600 mt-1">{metrics?.available_copies || 0}</p>
+                      <p className="text-[10px] text-emerald-600 font-medium mt-0.5">Available to borrow</p>
+                    </div>
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Card 3 for Librarian: Pending Reservations */}
+                  <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">RESERVATIONS</p>
+                      <p className="text-2xl font-black text-amber-600 mt-1">{metrics?.pending_reservations || 0}</p>
+                      <p className="text-[10px] text-amber-600 font-medium mt-0.5">Pending approval</p>
+                    </div>
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Card 4: Book Titles */}
               <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
@@ -384,8 +432,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Two Columns: Student Management & Librarian Management */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Two Columns: Student Management & (Admin Only) Librarian Management */}
+            <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-6`}>
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
                 <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
                   <h3 className="font-bold text-slate-800 text-sm">Student Management</h3>
@@ -429,58 +477,60 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
-                <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-800 text-sm">
-                    Librarian Management <span className="text-[10px] text-slate-400 font-normal">[Admin Only]</span>
-                  </h3>
-                  <div className="flex items-center space-x-2">
-                    <Link
-                      to="/users?role=Librarian"
-                      className="px-2.5 py-1 bg-blue-600 text-white rounded text-[11px] font-semibold hover:bg-blue-700 transition"
-                    >
-                      + Add Librarian
-                    </Link>
-                    <Link
-                      to="/users"
-                      className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded text-[11px] font-semibold hover:bg-slate-200 transition"
-                    >
-                      Manage Users
-                    </Link>
+              {isAdmin && (
+                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5">
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                    <h3 className="font-bold text-slate-800 text-sm">
+                      Librarian Management <span className="text-[10px] text-slate-400 font-normal">[Admin Only]</span>
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <Link
+                        to="/users?role=Librarian"
+                        className="px-2.5 py-1 bg-blue-600 text-white rounded text-[11px] font-semibold hover:bg-blue-700 transition"
+                      >
+                        + Add Librarian
+                      </Link>
+                      <Link
+                        to="/users"
+                        className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded text-[11px] font-semibold hover:bg-slate-200 transition"
+                      >
+                        Manage Users
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100 pb-2">
+                          <th className="pb-2.5 font-bold">USER ID</th>
+                          <th className="pb-2.5 font-bold">USERNAME</th>
+                          <th className="pb-2.5 font-bold">ROLE</th>
+                          <th className="pb-2.5 font-bold">STATUS</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                        {librarians.map((l, idx) => (
+                          <tr key={l.user_id || idx} className="hover:bg-slate-50/80 transition">
+                            <td className="py-2.5 font-mono text-slate-600">U00{l.user_id || idx + 4}</td>
+                            <td className="py-2.5 font-semibold text-slate-800">{l.username || l.full_name}</td>
+                            <td className="py-2.5">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
+                                Librarian
+                              </span>
+                            </td>
+                            <td className="py-2.5">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                Active
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100 pb-2">
-                        <th className="pb-2.5 font-bold">USER ID</th>
-                        <th className="pb-2.5 font-bold">USERNAME</th>
-                        <th className="pb-2.5 font-bold">ROLE</th>
-                        <th className="pb-2.5 font-bold">STATUS</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                      {librarians.map((l, idx) => (
-                        <tr key={l.user_id || idx} className="hover:bg-slate-50/80 transition">
-                          <td className="py-2.5 font-mono text-slate-600">U00{l.user_id || idx + 4}</td>
-                          <td className="py-2.5 font-semibold text-slate-800">{l.username || l.full_name}</td>
-                          <td className="py-2.5">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">
-                              Librarian
-                            </span>
-                          </td>
-                          <td className="py-2.5">
-                            <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                              Active
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Bottom Full-width Table: Recent Borrowing Activity */}
