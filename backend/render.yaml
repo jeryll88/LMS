@@ -3,7 +3,8 @@ services:
     name: school-library-backend
     env: node
     plan: free
-    buildCommand: npm install
+    rootDir: backend
+    buildCommand: npm install --include=dev
     startCommand: node server.js
     envVars:
       - key: PORT
