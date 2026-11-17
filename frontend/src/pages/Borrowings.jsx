@@ -354,12 +354,14 @@ export default function Borrowings() {
                                 >
                                   Renew
                                 </button>
-                                <button
-                                  onClick={() => handleReturn(b.borrow_id, b.book_title)}
-                                  className="text-xs text-emerald-600 hover:text-emerald-900 font-semibold px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 rounded transition"
-                                >
-                                  Return
-                                </button>
+                                {isStaff && (
+                                  <button
+                                    onClick={() => handleReturn(b.borrow_id, b.book_title)}
+                                    className="text-xs text-emerald-600 hover:text-emerald-900 font-semibold px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 rounded transition"
+                                  >
+                                    Return
+                                  </button>
+                                )}
                               </>
                             )}
                             {b.status === 'Returned' && (
@@ -429,7 +431,9 @@ export default function Borrowings() {
                     {b.status === 'Borrowed' && (
                       <div className="flex gap-2 pt-1">
                         <button onClick={() => handleRenew(b.borrow_id)} className="text-xs text-blue-600 font-semibold px-3 py-1.5 bg-blue-50 rounded-lg">Renew Loan (+7d)</button>
-                        <button onClick={() => handleReturn(b.borrow_id, b.book_title)} className="text-xs text-emerald-600 font-semibold px-3 py-1.5 bg-emerald-50 rounded-lg">Return Book</button>
+                        {isStaff && (
+                          <button onClick={() => handleReturn(b.borrow_id, b.book_title)} className="text-xs text-emerald-600 font-semibold px-3 py-1.5 bg-emerald-50 rounded-lg">Return Book</button>
+                        )}
                       </div>
                     )}
                   </div>
