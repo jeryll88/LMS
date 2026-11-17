@@ -254,31 +254,90 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* 6 Metric Stat Cards in Row */}
+            {/* 6 Metric Stat Cards with Professional SVG Icons */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-              <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">TOTAL USERS</p>
-                <p className="text-2xl font-black text-slate-800 mt-2">{metrics?.total_users || 9}</p>
+              {/* Card 1: Total Individuals / Users */}
+              <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">TOTAL INDIVIDUALS</p>
+                  <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_users || 0}</p>
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">All accounts</p>
+                </div>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                  </svg>
+                </div>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">STUDENTS</p>
-                <p className="text-2xl font-black text-slate-800 mt-2">{metrics?.total_students || 6}</p>
+
+              {/* Card 2: Students */}
+              <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">STUDENTS</p>
+                  <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_students || 0}</p>
+                  <p className="text-[10px] text-indigo-500 font-medium mt-0.5">Enrolled</p>
+                </div>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
+                  </svg>
+                </div>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">BOOK TITLES</p>
-                <p className="text-2xl font-black text-slate-800 mt-2">{metrics?.total_book_titles || 29}</p>
+
+              {/* Card 3: Librarians */}
+              <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">LIBRARIANS</p>
+                  <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_librarians || 0}</p>
+                  <p className="text-[10px] text-purple-500 font-medium mt-0.5">Staff & Admin</p>
+                </div>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                  </svg>
+                </div>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">TOTAL COPIES</p>
-                <p className="text-2xl font-black text-slate-800 mt-2">{metrics?.total_copies || 165}</p>
+
+              {/* Card 4: Book Titles */}
+              <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">BOOK TITLES</p>
+                  <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.total_book_titles || metrics?.total_books || 0}</p>
+                  <p className="text-[10px] text-amber-600 font-medium mt-0.5">{metrics?.total_copies || 0} copies</p>
+                </div>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                  </svg>
+                </div>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">ACTIVE BORROWINGS</p>
-                <p className="text-2xl font-black text-slate-800 mt-2">{metrics?.borrowed_copies || 6}</p>
+
+              {/* Card 5: Active Borrowings */}
+              <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">BORROWINGS</p>
+                  <p className="text-2xl font-black text-slate-800 mt-1">{metrics?.borrowed_copies || metrics?.active_borrowings || 0}</p>
+                  <p className="text-[10px] text-rose-500 font-medium mt-0.5">{metrics?.overdue_books || metrics?.overdue_transactions || 0} overdue</p>
+                </div>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-sm">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">COURSES</p>
-                <p className="text-2xl font-black text-slate-800 mt-2">{courses?.length || 17}</p>
+
+              {/* Card 6: Courses */}
+              <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200/80 shadow-sm flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">COURSES</p>
+                  <p className="text-2xl font-black text-slate-800 mt-1">{courses?.length || 0}</p>
+                  <p className="text-[10px] text-emerald-600 font-medium mt-0.5">Degree programs</p>
+                </div>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                  </svg>
+                </div>
               </div>
             </div>
 

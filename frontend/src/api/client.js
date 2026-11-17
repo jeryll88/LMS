@@ -7,7 +7,7 @@ const getBaseUrl = () => {
   }
   // When running deployed on Vercel and VITE_API_URL wasn't set, default to your Render backend
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return 'https://school-library-management-system-1.onrender.com';
+    return 'https://school-library-backend.onrender.com';
   }
   return '';
 };

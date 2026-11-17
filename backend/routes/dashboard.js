@@ -31,7 +31,12 @@ router.get('/metrics', async (req, res) => {
     if (role === 'librarian') {
       const counts = await db.query(`
         SELECT
+          (SELECT COUNT(*) FROM users) AS total_users,
+          (SELECT COUNT(*) FROM users WHERE LOWER(role) = 'user') AS total_students,
+          (SELECT COUNT(*) FROM users WHERE LOWER(role) = 'librarian') AS total_librarians,
           (SELECT COUNT(*) FROM books) AS total_books,
+          (SELECT COUNT(*) FROM books) AS total_book_titles,
+          (SELECT COUNT(*) FROM book_copies) AS total_copies,
           (SELECT COUNT(*) FROM book_copies WHERE status = 'Available') AS available_copies,
           (SELECT COUNT(*) FROM book_copies WHERE status = 'Borrowed') AS borrowed_copies,
           (SELECT COUNT(*) FROM borrowing_records WHERE status = 'Borrowed') AS active_borrowings,
