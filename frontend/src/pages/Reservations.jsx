@@ -149,6 +149,21 @@ export default function Reservations() {
           </div>
         )}
 
+        {/* Approved Reservation Notice for Students */}
+        {!isStaff && reservations.some(r => r.status === 'Approved') && (
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl flex items-center justify-between text-xs shadow-sm">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
+                ✓
+              </div>
+              <div>
+                <p className="font-bold text-sm text-emerald-950">You have a book reservation approved and ready for pickup!</p>
+                <p className="text-emerald-800 mt-0.5">Please visit the library counter to claim your book copy. Note your assigned return due date to prevent overdue penalty fees (₱10.00/day).</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Desktop Table */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="hidden md:block overflow-x-auto">

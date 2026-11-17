@@ -62,7 +62,28 @@ router.get('/', auth, async (req, res) => {
     sql += ' ORDER BY br.borrow_id DESC';
 
     const result = await db.query(sql, params);
-    const borrowings = result.rows.map(r => ({ ...r, id: r.borrow_id }));
+    const now = new Date();
+    const borrowings = result.rows.map(r => {
+      const dueDate = r.due_date ? new Date(r.due_date) : null;
+      const returnDate = r.return_date ? new Date(r.return_date) : null;
+
+      let daysOverdue = 0;
+      if (r.status === 'Borrowed' && dueDate && now > dueDate) {
+        daysOverdue = Math.max(0, Math.ceil((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)));
+      } else if (r.status === 'Returned' && dueDate && returnDate && returnDate > dueDate) {
+        daysOverdue = Math.max(0, Math.ceil((returnDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)));
+      }
+
+      const overdueFine = daysOverdue * 10; // ₱10.00 / day penalty
+
+      return {
+        ...r,
+        id: r.borrow_id,
+        days_overdue: daysOverdue,
+        overdue_fine: overdueFine,
+        is_overdue: daysOverdue > 0,
+      };
+    });
     res.json({ borrowings });
   } catch (err) {
     console.error('Fetch borrowings error:', err);
