@@ -49,7 +49,11 @@ export default function Users() {
       api.get('/api/courses')
     ])
       .then(([usersRes, coursesRes]) => {
-        setUsers(usersRes.data.users || []);
+        let list = usersRes.data.users || [];
+        if (activeRole) {
+          list = list.filter(u => u.role?.toLowerCase() === activeRole.toLowerCase());
+        }
+        setUsers(list);
         setCourses(coursesRes.data.courses || []);
         if (coursesRes.data.courses?.length > 0 && !currentUser.course_id) {
           setCurrentUser(prev => ({ ...prev, course_id: coursesRes.data.courses[0].id }));
