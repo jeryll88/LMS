@@ -129,35 +129,67 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// PUT /api/reservations/:id - Update reservation status (Admin or Librarian)
+// PUT /api/reservations/:id - Update reservation status & return due date (Admin or Librarian)
 router.put('/:id', auth, requireAnyRole(['Admin', 'Librarian']), async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body; // 'Pending', 'Approved', 'Cancelled', 'Fulfilled'
+  const { status, due_date } = req.body; // 'Pending', 'Approved', 'Cancelled', 'Fulfilled'
 
   if (!status) return res.status(400).json({ message: 'Status is required' });
 
   try {
     const resvCheck = await db.query(
-      `SELECT r.*, b.title FROM reservations r JOIN books b ON r.book_id = b.book_id WHERE r.reservation_id = $1`,
+      `SELECT r.*, b.title, u.email, u.full_name 
+       FROM reservations r 
+       JOIN books b ON r.book_id = b.book_id 
+       JOIN users u ON r.user_id = u.user_id 
+       WHERE r.reservation_id = $1`,
       [id]
     );
     if (resvCheck.rowCount === 0) return res.status(404).json({ message: 'Reservation not found' });
     const resv = resvCheck.rows[0];
 
-    const result = await db.query(
-      `UPDATE reservations SET status = $1 WHERE reservation_id = $2 RETURNING *`,
-      [status, id]
-    );
+    let result;
+    if (due_date) {
+      result = await db.query(
+        `UPDATE reservations SET status = $1, due_date = $2 WHERE reservation_id = $3 RETURNING *`,
+        [status, due_date, id]
+      );
+    } else {
+      result = await db.query(
+        `UPDATE reservations SET status = $1 WHERE reservation_id = $2 RETURNING *`,
+        [status, id]
+      );
+    }
+
+    const formattedDate = due_date ? new Date(due_date).toLocaleDateString() : (resv.due_date ? new Date(resv.due_date).toLocaleDateString() : '');
+
+    let noteTitle = 'Reservation Status Updated';
+    let noteMsg = `Your reservation status for "${resv.title}" has been updated to: ${status}.`;
+
+    if (status === 'Approved') {
+      noteTitle = 'Book Reservation Approved!';
+      noteMsg = formattedDate
+        ? `Great news! Your reservation for "${resv.title}" has been Approved. Return Due Date: ${formattedDate}. Please return by this date to avoid overdue penalty fees (₱10.00/day).`
+        : `Your reservation for "${resv.title}" has been Approved and is ready for pickup!`;
+    } else if (status === 'Fulfilled') {
+      noteTitle = 'Book Issued / Borrowed';
+      noteMsg = `You have picked up "${resv.title}". Please return on or before ${formattedDate || 'the designated due date'}.`;
+    }
 
     createNotification(
       resv.user_id,
       'RESERVATION_STATUS',
-      'Reservation Status Updated',
-      `Your reservation status for "${resv.title}" has been updated to: ${status}.`,
+      noteTitle,
+      noteMsg,
       '/reservations'
     );
 
-    res.json({ reservation: { ...result.rows[0], id: result.rows[0].reservation_id }, message: 'Reservation status updated' });
+    res.json({
+      reservation: { ...result.rows[0], id: result.rows[0].reservation_id },
+      message: status === 'Approved' && formattedDate
+        ? `Reservation approved! Return due date set to ${formattedDate}.`
+        : `Reservation status updated to ${status}.`
+    });
   } catch (err) {
     console.error('Update reservation error:', err);
     res.status(500).json({ message: 'Failed to update reservation: ' + err.message });
