@@ -102,12 +102,8 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ message: 'You already have an active reservation for this book.' });
     }
 
-    // Determine initial status: if available copies exist, can be Approved directly, else Pending
-    const availCopies = await db.query(
-      "SELECT copy_id FROM book_copies WHERE book_id = $1 AND status = 'Available' LIMIT 1",
-      [book_id]
-    );
-    const initialStatus = availCopies.rowCount > 0 ? 'Approved' : 'Pending';
+    // All student reservations begin with 'Pending' status until approved by a librarian
+    const initialStatus = 'Pending';
 
     const result = await db.query(
       `INSERT INTO reservations (user_id, book_id, reservation_date, status)
@@ -121,12 +117,12 @@ router.post('/', auth, async (req, res) => {
     createNotification(
       targetUserId,
       'RESERVATION_CREATED',
-      'Reservation Confirmed',
-      `Your reservation for "${book.title}" is ${initialStatus}. You will be notified when it is ready for collection.`,
+      'Reservation Request Submitted',
+      `Your reservation request for "${book.title}" is currently Pending approval by the librarian.`,
       '/reservations'
     );
 
-    res.status(201).json({ reservation, message: `Reservation placed successfully with status: ${initialStatus}` });
+    res.status(201).json({ reservation, message: 'Reservation submitted successfully and is pending librarian approval' });
   } catch (err) {
     console.error('Create reservation error:', err);
     res.status(500).json({ message: 'Failed to create reservation: ' + err.message });

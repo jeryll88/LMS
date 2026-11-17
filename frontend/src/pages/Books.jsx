@@ -401,7 +401,7 @@ export default function Books() {
   const handleReserve = async (bookId, title) => {
     try {
       const res = await api.post('/api/reservations', { book_id: bookId });
-      setMessage(res.data.message || `Reservation confirmed for "${title}"`);
+      setMessage(res.data.message || `Reservation request submitted for "${title}"`);
       loadData();
     } catch (err) {
       setError(err.response?.data?.message || 'Reservation failed');
